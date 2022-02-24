@@ -1,6 +1,6 @@
 # RemoteWireguard
 
-# basics
+# Basics
 The Projekt is based on the wireguard installation Script "road warrier". 
 Thanks to Nyr!
     https://github.com/Nyr/wireguard-install
