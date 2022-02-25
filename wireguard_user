@@ -65,7 +65,7 @@ check_install()	{
 }
 
 
-new_client () {
+new_client() {
 
 	# Locate the proper resolv.conf
 	# Needed for systems running systemd-resolved
@@ -125,24 +125,14 @@ delete_client ()  {
 	DELUSERNAME=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | grep $USERNAME)
 	
 	if [ -z "$DELUSERNAME" ]; then
-		echo
 		echo "error: There are no existing client named $USERNAME!"
 		# exit
 	else
-		echo 
-		echo "$DELUSERNAME ist gelöscht."
+		wg set wg0 peer "$(sed -n "/^# BEGIN_PEER $DELUSERNAME$/,\$p" /etc/wireguard/wg0.conf | grep -m 1 PublicKey | cut -d " " -f 3)" remove
+		sed -i "/^# BEGIN_PEER $DELUSERNAME/,/^# END_PEER $DELUSERNAME/d" /etc/wireguard/wg0.conf
+		echo "$DELUSERNAME deleted"
 	fi
 	
-	# search user in list:
-		
-	#client=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | sed -n "$client_number"p)
-		
-	#wg set wg0 peer "$(sed -n "/^# BEGIN_PEER $client$/,\$p" /etc/wireguard/wg0.conf | grep -m 1 PublicKey | cut -d " " -f 3)" remove
-				# Remove from the configuration file
-	#			sed -i "/^# BEGIN_PEER $client/,/^# END_PEER $client/d" /etc/wireguard/wg0.conf
-	#			echo
-	#			echo "$client removed!"
-
 	exit
 }
 
