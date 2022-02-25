@@ -30,16 +30,27 @@ check_install()	{
 		echo 'Please install WireGuard with road warrior installer first!'
 		exit
 	fi
+
+	# TODO: can i find all dependies? 
+	
+
 }
 
-# can i find dependies? 
-#if [[ ! -e /etc/wireguard/wg0.conf ]]; then
-#	clear
-#	echo 'Please install WireGuard with road warrior installer first!'
-#fi
+
 
 
 new_client_setup () {
+
+	# Locate the proper resolv.conf
+	# Needed for systems running systemd-resolved
+	if grep -q '^nameserver 127.0.0.53' "/etc/resolv.conf"; then
+		resolv_conf="/run/systemd/resolve/resolv.conf"
+	else
+		resolv_conf="/etc/resolv.conf"
+	fi
+	# Extract nameservers and provide them in the required format
+	dns=$(grep -v '^#\|^;' "$resolv_conf" | grep '^nameserver' | grep -oE '[0-9]{1,3}(\.[0-9]{1,3}){3}' | xargs | sed -e 's/ /, /g')
+
 	# Given a list of the assigned internal IPv4 addresses, obtain the lowest still
 	# available octet. Important to start looking at 2, because 1 is our gateway.
 	octet=2
@@ -77,46 +88,22 @@ AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = $(grep '^# ENDPOINT' /etc/wireguard/wg0.conf | cut -d " " -f 3):$(grep ListenPort /etc/wireguard/wg0.conf | cut -d " " -f 3)
 PersistentKeepalive = 25
 EOF
-}
 
-
-new_client_dns () {
-
-	# Locate the proper resolv.conf
-	# Needed for systems running systemd-resolved
-	if grep -q '^nameserver 127.0.0.53' "/etc/resolv.conf"; then
-		resolv_conf="/run/systemd/resolve/resolv.conf"
-	else
-		resolv_conf="/etc/resolv.conf"
-	fi
-	# Extract nameservers and provide them in the required format
-	dns=$(grep -v '^#\|^;' "$resolv_conf" | grep '^nameserver' | grep -oE '[0-9]{1,3}(\.[0-9]{1,3}){3}' | xargs | sed -e 's/ /, /g')
+# Append new client configuration to the WireGuard interface
+	wg addconf wg0 <(sed -n "/^# BEGIN_PEER $client/,/^# END_PEER $client/p" /etc/wireguard/wg0.conf)
 }
 
 
 
 	# eingabe auswerten
-	# case 
-	# new user: first argument - example: wirguard_adduser myname
-	unsanitized_client=$1
+		
+	username=$1
 
 	# Allow a limited set of characters to avoid conflicts
-	client=$(sed 's/[^0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-]/_/g' <<< "$unsanitized_client")
-
-	new_client_dns
+	client=$(sed 's/[^0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-]/_/g' <<< "$username")
 	new_client_setup
 
-	# Append new client configuration to the WireGuard interface
-	wg addconf wg0 <(sed -n "/^# BEGIN_PEER $client/,/^# END_PEER $client/p" /etc/wireguard/wg0.conf)
-
-
-#	echo
-#	qrencode -t UTF8 < ~/"$client.conf"
-#	echo -e '\xE2\x86\x91 That is a QR code containing your client configuration.'
-#	echo
-#	echo "$client added. Configuration available in:" ~/"$client.conf"
-
-#exit
+	
 
 
 
