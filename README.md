@@ -35,3 +35,12 @@ Usage: wireguard_user -o --option
 
                  wirguard_user -l
                         -> output: list of all users
+
+
+# wiregurad user per remote
+
+		ssh wireguard -l root -t "wireguard_user -l"
+		ssh wireguard -l root -t "wireguard_user -u test6 -a"
+		ssh wireguard -l root -t "wireguard_user -u test6 -d" >> test6-user.conf
+		ssh wireguard -l root -t "wireguard_user -u test6 -d"
+		
