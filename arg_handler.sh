@@ -1,4 +1,4 @@
-## only a testfile woh xou can handle the args of wireguard_user
+## only a testfile - how you can handle the args of wireguard_user
 
 help()
 {
