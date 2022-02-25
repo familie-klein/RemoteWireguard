@@ -1,9 +1,10 @@
 #!/bin/bash
 # based on 
 # https://github.com/Nyr/wireguard-install
-#
 # Copyright (c) 2020 Nyr. Released under the MIT License.
-# Copyright (c) Changes 2022 David Klein. Released under the MIT License.
+# 
+# all changes: 
+# Copyright (c) 2022 David Klein. Released under the MIT License.
 
 help()  {
     echo "
@@ -64,7 +65,7 @@ check_install()	{
 }
 
 
-new_client_setup () {
+new_client () {
 
 	# Locate the proper resolv.conf
 	# Needed for systems running systemd-resolved
@@ -118,6 +119,7 @@ EOF
 	wg addconf wg0 <(sed -n "/^# BEGIN_PEER $client/,/^# END_PEER $client/p" /etc/wireguard/wg0.conf)
 }
 
+
 delete_client ()  {
 	
 	DELUSERNAME=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | grep $USERNAME)
@@ -150,6 +152,10 @@ list_users()  {
 }
 
 
+
+check_install
+
+
 # readings Args 
 SHORT=u:,a,d,h,l
 LONG=user:,add,del,help,list
@@ -168,12 +174,12 @@ do
 		;;
     -a | --add )
 		ADD=true
-		new_client_setup
+		new_client
 		shift 1
 		;;
     -d | --del )
 		DEL=true
-		echo "del"
+		delete_client
 		shift 1
 		;;
 	-l | --list)
