@@ -71,3 +71,4 @@ do
 		;;
   esac
 done
+# todo: handler programmieren, sodass die Reihenfolge der eingabe egal ist
