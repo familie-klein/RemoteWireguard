@@ -36,8 +36,11 @@ Usage: wireguard_user -o --option
                  wirguard_user -l
                         -> output: list of all users
 
+[ToDo: order of args ]
 
-# wiregurad user per remote
+# wireguard_user per remote ssh
+
+[Todo: ssh checkup]
 
 		ssh wireguard -l root -t "wireguard_user -l"
 		ssh wireguard -l root -t "wireguard_user -u test6 -a"
