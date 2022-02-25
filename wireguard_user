@@ -5,6 +5,33 @@
 # Copyright (c) 2020 Nyr. Released under the MIT License.
 # Copyright (c) Changes 2022 David Klein. Released under the MIT License.
 
+help()  {
+    echo "
+
+	Usage: wireguard_user -o --option
+
+	options:[ -u | --user ]
+		[ -d | --del  ]
+		[ -a | --add  ]
+		[ -l | --list ]
+                [ -h | --help ]
+
+	examples: wireguard_user -u MyUserName -a
+			-> creates a user
+			-> output: user.config file
+
+		 wireguard_user -u MyUserName -a
+			-> deletes a user
+			-> output: user xyz deleted or user xyz not found
+
+	 	 wirguard_user -l
+			-> output: list of all users
+
+"
+    exit 2
+}
+
+
 check_install()	{
 	# Detect Debian users running the script with "sh" instead of bash
 	if readlink /proc/$$/exe | grep -q "dash"; then
@@ -95,14 +122,48 @@ EOF
 
 
 
-	# eingabe auswerten
-		
-	username=$1
+# readings Args 
+SHORT=u:,a,d,h,l
+LONG=user:,add,del,help,list
+OPTS=$(getopt -a -n wireguard_user --options $SHORT --longoptions $LONG -- "$@")
 
-	# Allow a limited set of characters to avoid conflicts
-	client=$(sed 's/[^0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-]/_/g' <<< "$username")
-	new_client_setup
+eval set -- "$OPTS"
 
+while :
+do
+  case "$1" in
+    -u | --user )
+      USERNAME="$2"
+      shift 2
+	  # Allow a limited set of characters to avoid conflicts
+	  client=$(sed 's/[^0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-]/_/g' <<< "$USERNAME")
+      ;;
+    -a | --add )
+      ADD=true
+	  new_client_setup
+	shift 1
+	;;
+    -d | --del )
+      DEL=true
+	echo "del"
+	shift 1
+      ;;
+    -h | --help)
+      help
+      exit 2
+      ;;
+    --)
+      shift;
+      break
+      ;;
+    *)
+      echo "error: Unexpected option: $1"
+      break
+      ;;
+  esac
+done
+
+	
 	
 
 
