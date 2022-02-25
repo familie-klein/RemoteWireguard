@@ -56,6 +56,7 @@ do
 	-l | --list)
 		list_users
 		exit 2
+		;;
     -h | --help)
 		help
 		exit 2
