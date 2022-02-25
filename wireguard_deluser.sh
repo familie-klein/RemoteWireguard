@@ -87,7 +87,7 @@ new_client_dns () {
 #	echo "   6) AdGuard"
 #	read -p "DNS server [1]: " dns
 
-dns = 1
+dns='1'
 	until [[ -z "$dns" || "$dns" =~ ^[1-6]$ ]]; do
 		echo "$dns: invalid selection."
 		read -p "DNS server [1]: " dns
@@ -126,13 +126,13 @@ dns = 1
 
 
 # Name abholen:
-	
+
 	# Nyr way:  
 	#echo "Enter a name for the first client:"
 	#read -p "Name [client]: " unsanitized_client
-	
+
 	# new user: 
-	unsanitized_client = "test"
+	unsanitized_client="test"
 	
 	# Allow a limited set of characters to avoid conflicts
 	client=$(sed 's/[^0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-]/_/g' <<< "$unsanitized_client")
