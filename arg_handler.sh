@@ -38,30 +38,35 @@ while :
 do
   case "$1" in
     -u | --user )
-      USERNAME="$2"
-      shift 2
-      ;;
+		USERNAME="$2"
+		shift 2
+		# Allow a limited set of characters to avoid conflicts
+		client=$(sed 's/[^0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-]/_/g' <<< "$USERNAME")
+		;;
     -a | --add )
-      ADD=true
-	echo "add"
-	shift 1
-	;;
+		ADD=true
+		new_client_setup
+		shift 1
+		;;
     -d | --del )
-      DEL=true
-	echo "del"
-	shift 1
-      ;;
+		DEL=true
+		echo "del"
+		shift 1
+		;;
+	-l | --list)
+		list_users
+		exit 2
     -h | --help)
-      help
-      exit 2
-      ;;
+		help
+		exit 2
+		;;
     --)
-      shift;
-      break
-      ;;
+		shift;
+		break
+		;;
     *)
-      echo "error: Unexpected option: $1"
-      break
-      ;;
+		echo "error: Unexpected option: $1"
+		break
+		;;
   esac
 done
