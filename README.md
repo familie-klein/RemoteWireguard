@@ -58,8 +58,8 @@ See *user wireguard-user easily* chapter to install wireguard_user in your syste
 Now the following commands can be used from a terminal in your 
 
 
-		ssh wireguard -l root -t "wireguard_user -l"
-		ssh wireguard -l root -t "wireguard_user -u test -a"
-		ssh wireguard -l root -t "wireguard_user -u test -a" >> test-user.conf
-		ssh wireguard -l root -t "wireguard_user -u test -d"
+		ssh wireguard -q -l root -t "wireguard_user -l"
+		ssh wireguard -q -l root -t "wireguard_user -u test -a"
+		ssh wireguard -q -l root -t "wireguard_user -u test -a" >> test-user.conf
+		ssh wireguard -q -l root -t "wireguard_user -u test -d"
 		
