@@ -1,4 +1,4 @@
-# wireguad_user
+# wireguard_user
 
 # Basics
 The Projekt is based on the wireguard installation Script "road warrier". 
