@@ -12,10 +12,10 @@ to get very easily an installation of wireguard you can use Nyrs Script vor exam
 RemoteWirguard needs a running wireguard, ssh and apache2 with php
 
 
-# Aims
-aim of this (right now - 24.02.22 startig) Projekt is: 
-You should be able to easily add or delete a user by using wirguard_adduser or wireguard_deluser. wireguard_userlist should give you an list of all users.
+# Description
+Aim of this Projekt is: You should be able to easily add or delete a user by using wirguard_user --add or wireguard_user --del. wireguard_user --list should give you an list of all users.
 
+## optput wireguard_user --list: 
 
 Usage: wireguard_user -o --option
 
@@ -29,7 +29,7 @@ Usage: wireguard_user -o --option
                         -> creates a user 
                         -> output: user.config file
 
-                 wireguard_user -u MyUserName -a
+                 wireguard_user -u MyUserName -d
                         -> deletes a user 
                         -> output: "user xyz deletet" or "user xyz not found"
 
@@ -38,12 +38,28 @@ Usage: wireguard_user -o --option
 
 [ToDo: order of args ]
 
+## wireguard-user systemwide
+Just copy the script to the sbin directory:
+
+	cp /pathToWireguard_user/wireguard_user /sbin/
+	chmod a+x /sbin/wireguard_user
+
 # wireguard_user per remote ssh
 
-[Todo: ssh checkup]
+## ssh environment
+If you want to create or delete wirguard users remotly form another machine, first push the ssh token to the wiregurad-machine. 
+Open a Terminal in the remote-machine and execute:
+
+		ssh-keygen -t rsa -b 4096
+		ssh-copy-id -i ~/.ssh/id_rsa.pub root@wireguard
+
+## usage remotely
+See *user wireguard-user easily* chapter to install wireguard_user in your system as a typical command:
+Now the following commands can be used from a terminal in your 
+
 
 		ssh wireguard -l root -t "wireguard_user -l"
-		ssh wireguard -l root -t "wireguard_user -u test6 -a"
-		ssh wireguard -l root -t "wireguard_user -u test6 -d" >> test6-user.conf
-		ssh wireguard -l root -t "wireguard_user -u test6 -d"
+		ssh wireguard -l root -t "wireguard_user -u test -a"
+		ssh wireguard -l root -t "wireguard_user -u test -a" >> test-user.conf
+		ssh wireguard -l root -t "wireguard_user -u test -d"
 		
