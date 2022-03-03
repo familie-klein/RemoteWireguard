@@ -1,9 +1,9 @@
 #!/bin/bash
-# based on 
+# based on
 # https://github.com/Nyr/wireguard-install
 # Copyright (c) 2020 Nyr. Released under the MIT License.
-# 
-# all changes: 
+#
+# all changes:
 # Copyright (c) 2022 David Klein. Released under the MIT License.
 
 help()  {
@@ -11,61 +11,102 @@ help()  {
 
 	Usage: wireguard_user -o --option
 
-	options:[ -u | --user ]
-		[ -d | --del  ]
-		[ -a | --add  ]
-		[ -l | --list ]
-                [ -h | --help ]
+	options:[ -u | --user  ]
+		[ -d | --del   ]
+		[ -a | --add   ]
+		[ -c | --check ]
+		[ -l | --list  ]
+		[ -e | --erase ]
+                [ -h | --help  ]
+
 
 	examples: wireguard_user -u MyUserName -a
 			-> creates a user
-			-> output: user.config file
+			-> output: 	user.config file
+					error: user exists
 
-		 wireguard_user -u MyUserName -a
+		 wireguard_user -u MyUserName -d
 			-> deletes a user
-			-> output: user xyz deleted or user xyz not found
+			-> output: 	user xyz deleted
+					error: user xyz not found
 
-	 	 wirguard_user -l
+	 	 wireguard_user -l
 			-> output: list of all users
 
+		wireguard_user -u MyUserName -c
+                        -> output: 	user xyz exists
+					error: user xyz not found
+
 "
-    exit 2
 }
 
 
 check_install()	{
 	# Detect Debian users running the script with "sh" instead of bash
 	if readlink /proc/$$/exe | grep -q "dash"; then
-		echo 'This installer needs to be run with "bash", not "sh".'
-		exit
+		echo 'error: This installer needs to be run with "bash", not "sh".'
+		exit 2
 	fi
 
 	# Detect environments where $PATH does not include the sbin directories
 	if ! grep -q sbin <<< "$PATH"; then
-		echo '$PATH does not include sbin. Try using "su -" instead of "su".'
-		exit
+		echo 'error: $PATH does not include sbin. Try using "su -" instead of "su".'
+		exit 2
 	fi
 
 	# Are you root?
 	if [[ "$EUID" -ne 0 ]]; then
-		echo "This needs to be run with superuser privileges."
-		exit
+		echo "error: This needs to be run with superuser privileges."
+		exit 2
 	fi
 
-	# is there a wirguard config? 
+	# is there a wirguard config?
 	if [[ ! -e /etc/wireguard/wg0.conf ]]; then
 		clear
-		echo 'Please install WireGuard with road warrior installer first!'
-		exit
+		echo 'error: Please install WireGuard with road warrior installer first!'
+		exit 2
 	fi
 
-	# TODO: can i find all dependies? 
-	
+	# TODO: can i find all dependies?
 
 }
 
 
+remove_all_users()
+{
+        sed -i "/^# BEGIN_PEER /,/^# END_PEER /d" /etc/wireguard/wg0.conf
+	echo "all users deleted"
+}
+
+
+list_users()  {
+        grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3
+}
+
+check_username(){
+
+	USERLIST=($(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 ))
+	for u in "${USERLIST[@]}"
+	do 
+		if [ "$u" == "$client" ]; then 
+			return 1
+		fi
+	done
+
+	return 0
+}
+
+
+
 new_client() {
+
+	# check existing names 
+	check_username $*
+	if [ $? -eq 1 ]
+                then
+                        echo "error: user $client exists - choose another username"
+                        exit 1
+                fi
 
 	# Locate the proper resolv.conf
 	# Needed for systems running systemd-resolved
@@ -85,19 +126,19 @@ new_client() {
 	done
 	# Don't break the WireGuard configuration in case the address space is full
 	if [[ "$octet" -eq 255 ]]; then
-		echo "253 clients are already configured. The WireGuard internal subnet is full!"
-		exit
+		echo "error: 253 clients are already configured. The WireGuard internal subnet is full!"
+		exit 1
 	fi
 	key=$(wg genkey)
 	psk=$(wg genpsk)
 	# Configure client in the server
 	cat << EOF >> /etc/wireguard/wg0.conf
-# BEGIN_PEER $client
+# BEGIN_PEER $client 
 [Peer]
 PublicKey = $(wg pubkey <<< $key)
 PresharedKey = $psk
 AllowedIPs = 10.7.0.$octet/32$(grep -q 'fddd:2c4:2c4:2c4::1' /etc/wireguard/wg0.conf && echo ", fddd:2c4:2c4:2c4::$octet/128")
-# END_PEER $client
+# END_PEER $client 
 EOF
 	# Create client configuration
 	# cat << EOF > ~/"$client".conf
@@ -121,24 +162,18 @@ EOF
 
 
 delete_client ()  {
-	
-	DELUSERNAME=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | grep $USERNAME)
-	
+
+
+	 DELUSERNAME=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | grep $client$)
+
 	if [ -z "$DELUSERNAME" ]; then
-		echo "error: There are no existing client named $USERNAME!"
+		echo "error: There is no existing client named $client!"
 		# exit
 	else
-		wg set wg0 peer "$(sed -n "/^# BEGIN_PEER $DELUSERNAME$/,\$p" /etc/wireguard/wg0.conf | grep -m 1 PublicKey | cut -d " " -f 3)" remove
-		sed -i "/^# BEGIN_PEER $DELUSERNAME/,/^# END_PEER $DELUSERNAME/d" /etc/wireguard/wg0.conf
+		wg set wg0 peer "$(sed -n "/^# BEGIN_PEER $DELUSERNAME $/,\$p" /etc/wireguard/wg0.conf | grep -m 1 PublicKey | cut -d " " -f 3)" remove
+		sed -i "/^# BEGIN_PEER $DELUSERNAME /,/^# END_PEER $DELUSERNAME /d" /etc/wireguard/wg0.conf
 		echo "$DELUSERNAME deleted"
 	fi
-	
-	exit
-}
-
-
-list_users()  {
-	grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3
 }
 
 
@@ -147,8 +182,8 @@ check_install
 
 
 # readings Args 
-SHORT=u:,a,d,h,l
-LONG=user:,add,del,help,list
+SHORT=u:,a,d,h,l,e,c
+LONG=user:,add,del,help,list,erase,check
 OPTS=$(getopt -a -n wireguard_user --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"
@@ -157,28 +192,42 @@ while :
 do
   case "$1" in
     -u | --user )
-		USERNAME="$2"
-		shift 2
-		# Allow a limited set of characters to avoid conflicts
-		client=$(sed 's/[^0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-]/_/g' <<< "$USERNAME")
+		if [ -z "$2" ]; then
+			 echo "error: no username is given"
+
+                        exit 1
+		else
+		 	USR=true
+                        # Allow a limited set of characters to avoid conflicts
+                        client=$(sed 's/[^0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-]/_/g' <<< "$2")
+
+			shift 2
+
+		fi
 		;;
     -a | --add )
 		ADD=true
-		new_client
 		shift 1
 		;;
     -d | --del )
 		DEL=true
-		delete_client
 		shift 1
 		;;
-	-l | --list)
+    -l | --list)
 		list_users
-		exit 2
+		exit 0
 		;;
+    -e | --erase)
+                remove_all_users
+                exit 2
+                ;;
+    -c | --check)
+		CHK=true
+                shift 1
+                ;;
     -h | --help)
 		help
-		exit 2
+		exit 3
 		;;
     --)
 		shift;
@@ -186,13 +235,44 @@ do
 		;;
     *)
 		echo "error: Unexpected option: $1"
-		break
+		exit 1
 		;;
   esac
 done
 
-	
-	
+if [[ $ADD = true ]]; then
+	if [[ $USR = true ]]; then 
+		new_client
+		exit 0
+	else
+		echo "error: An Option is missing! Take a look at -> wiregard_user --help "
+		exit 1
+	fi
+fi
 
+if [[ $DEL = true ]]; then
+	 if [[ $USR = true ]]; then 
+		delete_client
+		exit 0
+	else
+        	echo "error: An Option is missing! Take a look at -> wiregard_user --help "
+		exit 1
+	fi
+fi
 
-
+if [[ $CHK = true ]]; then
+	 if [[ $USR = true ]]; then 
+		check_username $*
+		if [ $? -eq 1 ]
+		then
+		 	echo "user $client exists"
+			exit 0
+		else
+			echo "error: user $client not found"
+			exit 1
+		fi
+	else
+        	echo "error: An option is missing! Take a look at -> wiregard_user --help "
+        	exit 1
+	fi
+fi
